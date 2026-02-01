@@ -25,16 +25,13 @@ jobs:
 
           Copy-Item $src $dst -Recurse -Force
 
-      - name: Restart Bedrock Server
+      - name: Restart Bedrock Server (Interactive)
         shell: powershell
         run: |
-          $exe = "D:\MinecraftBedrockServers\v1.21.132.3\bedrock_server.exe"
-          $dir = "D:\MinecraftBedrockServers\v1.21.132.3"
-
           Write-Host "Stopping bedrock_server..."
           Get-Process bedrock_server -ErrorAction SilentlyContinue | Stop-Process -Force
 
-          Start-Sleep -Seconds 10
+          Start-Sleep -Seconds 5
 
-          Write-Host "Starting bedrock_server..."
-          Start-Process -FilePath $exe -WorkingDirectory $dir
+          Write-Host "Trigger scheduled task..."
+          schtasks /run /tn "StartBedrockInteractive"
