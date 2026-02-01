@@ -1,0 +1,268 @@
+import { world, system } from "@minecraft/server";
+
+// === KONFIGURASI ===
+const ROLES = {
+  OP: { tag: "OP", level: 99, prefix: "§4[OWNER] §r" },
+  MOD: { tag: "MOD", level: 30, prefix: "§c[MOD] §r" },
+  VVIP: { tag: "VVIP", level: 20, prefix: "§6[VVIP] §r" },
+  VIP: { tag: "VIP", level: 10, prefix: "§b[VIP] §r" },
+};
+
+system.run(() => {
+  console.warn(">> [Role System] Hierarchy Fixed (v1.0.6)");
+});
+
+// === HELPER FUNCTIONS ===
+
+// FIX: Menghapus player.isOp() yang menyebabkan Crash
+function getPlayerRoleLevel(player) {
+  if (player.hasTag(ROLES.OP.tag)) return ROLES.OP.level; // Cukup cek Tag OP
+  if (player.hasTag(ROLES.MOD.tag)) return ROLES.MOD.level;
+  if (player.hasTag(ROLES.VVIP.tag)) return ROLES.VVIP.level;
+  if (player.hasTag(ROLES.VIP.tag)) return ROLES.VIP.level;
+  return 0;
+}
+
+function updateNameTag(player) {
+  let prefix = "";
+  const level = getPlayerRoleLevel(player);
+
+  if (level >= ROLES.OP.level) prefix = ROLES.OP.prefix;
+  else if (level >= ROLES.MOD.level) prefix = ROLES.MOD.prefix;
+  else if (level >= ROLES.VVIP.level) prefix = ROLES.VVIP.prefix;
+  else if (level >= ROLES.VIP.level) prefix = ROLES.VIP.prefix;
+
+  if (prefix !== "") {
+    if (!player.nameTag.startsWith(prefix.trim().substring(0, 4))) {
+      player.nameTag = `${prefix}${player.name}`;
+    }
+  } else {
+    if (player.nameTag !== player.name) player.nameTag = player.name;
+  }
+}
+
+system.runInterval(() => {
+  for (const player of world.getPlayers()) updateNameTag(player);
+}, 60);
+
+// === SCRIPT EVENT CONTROLLER ===
+system.afterEvents.scriptEventReceive.subscribe((eventData) => {
+  const { id, sourceEntity, message } = eventData;
+
+  if (!id.startsWith("cmd:")) return;
+  if (!sourceEntity || sourceEntity.typeId !== "minecraft:player") return;
+
+  const player = sourceEntity;
+  const action = id.split(":")[1];
+  const userLevel = getPlayerRoleLevel(player);
+
+  const targetName = message ? message.trim() : "";
+
+  // === UNIVERSAL COMMAND: HELP ===
+  // Bisa diakses semua orang, tapi isinya menyesuaikan level
+  if (action === "help") {
+    let helpMsg = `§2=== §aSERVER MENU §2===\n`;
+
+    // Help untuk Level 0 (Player Biasa)
+    helpMsg += `§7Gunakan /scriptevent cmd:<perintah>\n`;
+
+    // Help untuk VIP (Level 10+)
+    if (userLevel >= 10) {
+      helpMsg += `\n§b[VIP COMMANDS] §r\n`;
+      helpMsg += ` §f- §bheal  §7: Isi darah penuh\n`;
+      helpMsg += ` §f- §bfeed  §7: Isi lapar penuh\n`;
+      helpMsg += ` §f- §bnv    §7: Toggle Night Vision\n`;
+    }
+
+    // Help untuk VVIP (Level 20+)
+    if (userLevel >= 20) {
+      helpMsg += `\n§6[VVIP COMMANDS] §r\n`;
+      helpMsg += ` §f- §6jump  §7: Superhero Mode (Fly)\n`;
+      helpMsg += ` §f- §6speed §7: Toggle Speed Boost\n`;
+    }
+
+    // Help untuk MOD (Level 30+)
+    if (userLevel >= 30) {
+      helpMsg += `\n§c[MODERATOR] §r\n`;
+      helpMsg += ` §f- §cgmc/gms §7: Ganti Gamemode\n`;
+      helpMsg += ` §f- §cday     §7: Ubah ke Siang\n`;
+      helpMsg += ` §f- §cvanish  §7: Menghilang\n`;
+      helpMsg += ` §f- §csetvip  §7: Angkat Member\n`;
+      helpMsg += ` §f- §cremovetag §7: Pecat Member\n`;
+    }
+
+    player.sendMessage(helpMsg);
+    return;
+  }
+
+  // --- LEVEL 10: VIP ---
+  if (userLevel >= 10) {
+    switch (action) {
+      case "heal":
+        const hp = player.getComponent("minecraft:health");
+        if (hp) hp.setCurrentValue(hp.defaultValue); // Pakai defaultValue biar aman
+        player.sendMessage("§a>> Darah dipulihkan!");
+        return;
+      case "feed":
+        player.runCommand("effect @s saturation 1 255 true");
+        player.sendMessage("§a>> Rasa lapar hilang!");
+        return;
+      case "nv":
+        // Cek Tag NV_ACTIVE
+        if (!player.hasTag("NV_ACTIVE")) {
+          // --- NYALAKAN ---
+          player.addTag("NV_ACTIVE");
+          // Night Vision durasi tak terbatas
+          player.runCommand("effect @s night_vision 99999 0 true");
+          player.sendMessage("§b>> Mata Elang: §aAKTIF 👁️");
+        } else {
+          // --- MATIKAN ---
+          player.removeTag("NV_ACTIVE");
+          // Hapus efek Night Vision saja (Durasi 0)
+          player.runCommand("effect @s night_vision 0");
+          player.sendMessage("§b>> Mata Elang: §cNON-AKTIF");
+        }
+        return;
+    }
+  }
+
+  // --- LEVEL 20: VVIP ---
+  if (userLevel >= 20) {
+    switch (action) {
+      // === FITUR 1: SUPERHERO JUMP (Ganti Fly) ===
+      case "jump":
+        // Cek Tag FLY_ACTIVE
+        if (!player.hasTag("FLY_ACTIVE")) {
+          // --- NYALAKAN ---
+          player.addTag("FLY_ACTIVE");
+
+          // Jump Boost 4 (Loncat Tinggi)
+          player.runCommand("effect @s jump_boost 99999 4 true");
+          // Slow Falling (Anti Jatuh)
+          player.runCommand("effect @s slow_falling 99999 0 true");
+          // Speed 2 (Lari Cepat saat terbang)
+          player.runCommand("effect @s speed 99999 2 true");
+
+          player.sendMessage("§6>> VVIP Flight: §aAKTIF (Superhero Mode) 🦸");
+          player.sendMessage("§e(Loncat Tinggi + Anti Fall Damage)");
+        } else {
+          // --- MATIKAN ---
+          player.removeTag("FLY_ACTIVE");
+
+          // Hapus efek KHUSUS yang dipakai Fly saja (Durasi 0)
+          player.runCommand("effect @s jump_boost 0");
+          player.runCommand("effect @s slow_falling 0");
+
+          // Cek: Kalau dia punya tag SPEED_ACTIVE, Speed-nya jangan dihapus nol, tapi kembalikan ke level 1
+          if (player.hasTag("SPEED_ACTIVE")) {
+            player.runCommand("effect @s speed 99999 1 true");
+          } else {
+            player.runCommand("effect @s speed 0");
+          }
+
+          player.sendMessage("§6>> VVIP Flight: §cNON-AKTIF");
+        }
+        return;
+
+      // === FITUR 2: SPEED BOOST TOGGLE ===
+      case "speed":
+        // Cek Tag SPEED_ACTIVE
+        if (!player.hasTag("SPEED_ACTIVE")) {
+          // --- NYALAKAN ---
+          player.addTag("SPEED_ACTIVE");
+          // Speed 1 (Cepat tapi masih terkontrol)
+          // Format: effect <target> speed <seconds> <amplifier> <hideParticles>
+          player.runCommand("effect @s speed 99999 1 true");
+          player.sendMessage("§6>> VVIP Speed: §aAKTIF ⚡");
+        } else {
+          // --- MATIKAN ---
+          player.removeTag("SPEED_ACTIVE");
+
+          // Hapus efek Speed (Durasi 0)
+          // Kecuali kalau dia lagi Fly, jangan dihapus (biar gak jatuh)
+          if (!player.hasTag("FLY_ACTIVE")) {
+            player.runCommand("effect @s speed 0");
+          }
+
+          player.sendMessage("§6>> VVIP Speed: §cNON-AKTIF");
+        }
+        return;
+    }
+  }
+
+  // --- LEVEL 30: MODERATOR ---
+  if (userLevel >= 30) {
+    switch (action) {
+      case "gmc":
+        player.runCommand("gamemode creative @s");
+        return;
+      case "gms":
+        player.runCommand("gamemode survival @s");
+        return;
+      case "day":
+        player.runCommand("time set day");
+        return;
+
+      case "vanish":
+        player.runCommand("effect @s invisibility 99999 0 true");
+        player.sendMessage("§c>> Mode Hantu: ON");
+        return;
+
+      case "setvip":
+        handleRankChange(player, targetName, "VIP");
+        return;
+      case "setvvip":
+        handleRankChange(player, targetName, "VVIP");
+        return;
+      case "removetag":
+        handleRankChange(player, targetName, "REMOVE");
+        return;
+    }
+  }
+
+  player.sendMessage(`§c>> Command salah atau Level kurang. (${action})`);
+});
+
+// Helper Rank Change
+function handleRankChange(admin, targetName, rankType) {
+  if (targetName === "") {
+    admin.sendMessage(
+      "§cError: Masukkan nama player. Contoh: /scriptevent cmd:setvip Steve",
+    );
+    return;
+  }
+
+  // Mengambil player dengan filter nama
+  const targets = world.getPlayers({ name: targetName });
+  const target = targets[0]; // Ambil yang pertama ketemu
+
+  if (!target) {
+    admin.sendMessage(
+      `§cError: Player '${targetName}' tidak ditemukan atau offline.`,
+    );
+    return;
+  }
+
+  if (getPlayerRoleLevel(target) >= 30) {
+    admin.sendMessage(
+      "§cSecurity: Anda tidak bisa mengubah rank sesama Staff/OP!",
+    );
+    return;
+  }
+
+  if (rankType === "REMOVE") {
+    target.removeTag("VIP");
+    target.removeTag("VVIP");
+    admin.sendMessage(`§aSuccess: Semua rank ${target.name} dicabut.`);
+    target.sendMessage("§e>> Rank Anda dicabut oleh Moderator.");
+  } else {
+    target.removeTag("VIP");
+    target.removeTag("VVIP");
+    target.addTag(rankType);
+    admin.sendMessage(
+      `§aSuccess: ${target.name} diangkat menjadi ${rankType}.`,
+    );
+    target.sendMessage(`§a>> Selamat! Anda diangkat menjadi ${rankType}.`);
+    updateNameTag(target);
+  }
+}
