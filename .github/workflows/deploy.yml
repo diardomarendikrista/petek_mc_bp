@@ -34,7 +34,7 @@ jobs:
           Write-Host "Stopping bedrock_server..."
           Get-Process bedrock_server -ErrorAction SilentlyContinue | Stop-Process -Force
 
-          Start-Sleep -Seconds 3
+          Start-Sleep -Seconds 10
 
           Write-Host "Starting bedrock_server..."
           Start-Process -FilePath $exe -WorkingDirectory $dir
