@@ -27,8 +27,11 @@ jobs:
           }
 
           robocopy $src $dst /MIR /XD .git .github
+
           if ($LASTEXITCODE -ge 8) {
-            throw "Robocopy gagal dengan exit code $LASTEXITCODE"
+            throw "Robocopy ERROR dengan exit code $LASTEXITCODE"
+          } else {
+            Write-Host "Robocopy sukses (exit code $LASTEXITCODE)"
           }
 
       - name: Restart Bedrock Server
