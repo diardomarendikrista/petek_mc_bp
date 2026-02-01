@@ -28,5 +28,13 @@ jobs:
       - name: Restart Bedrock Server
         shell: powershell
         run: |
+          $exe = "D:\MinecraftBedrockServers\v1.21.132.3\bedrock_server.exe"
+          $dir = "D:\MinecraftBedrockServers\v1.21.132.3"
+
+          Write-Host "Stopping bedrock_server..."
           Get-Process bedrock_server -ErrorAction SilentlyContinue | Stop-Process -Force
-          Start-Process "D:\MinecraftBedrockServers\v1.21.132.3\bedrock_server.exe"
+
+          Start-Sleep -Seconds 3
+
+          Write-Host "Starting bedrock_server..."
+          Start-Process -FilePath $exe -WorkingDirectory $dir
