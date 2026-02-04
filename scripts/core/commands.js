@@ -48,13 +48,15 @@ import {
   handleListHomes,
 } from "../features/teleport/homes.js";
 import { handlePos1, handlePos2 } from "../features/general/selection.js";
-import { handleProtect, handleUnprotect } from "../features/admin/protection.js";
+import { handleProtect, handleUnprotect, handleZoneFlag, handleZoneRename, handleZoneInfo, getAllZones } from "../features/admin/protection.js";
 import { handleFill } from "../features/admin/fill.js";
 import { handleCopy, handlePaste } from "../features/admin/clipboard.js";
 import { handleUndo } from "../features/admin/undo.js";
 import { handlePay, handleBalance, handleAddMoney, handleCheckBalanceOther } from "../features/economy/economy.js";
 import { handleSell, handlePriceCheck } from "../features/economy/shop.js";
 import { handleButcher } from "../features/admin/admin.js";
+
+// [REVERTED] COMMAND_REGISTRY removed as per user request for simplicity.
 
 export function executeCommand(player, action, messageArgs) {
   const userLevel = getPlayerRoleLevel(player);
@@ -223,6 +225,12 @@ export function executeCommand(player, action, messageArgs) {
       case "tp":
         handleDirectTP(player, args);
         return true;
+      case "restore":
+        const hpRes = player.getComponent("minecraft:health");
+        if (hpRes) hpRes.setCurrentValue(hpRes.defaultValue);
+        player.runCommand("effect @s saturation 1 255 true");
+        player.sendMessage("§6>> Kondisi fisik dipulihkan sepenuhnya!");
+        return true;
     }
   }
 
@@ -289,6 +297,49 @@ export function executeCommand(player, action, messageArgs) {
         return true;
       case "unprotect":
         handleUnprotect(player, args);
+        return true;
+      case "zoneflag":
+      case "flag":
+        // args: "name key value"
+        // kita butuh split 3 argumen.
+        // Tapi di handler kita panggil handleZoneFlag(player, zoneName, flagKey, flagValue)
+        // Kita parsing manual simple disini atau biarkan handler terima raw args?
+        // Handler 'handleZoneFlag' expect (player, zoneName, flagKey, flagValue).
+        // Fungsi executeCommand mengirim `messageArgs` sebagai satu string.
+        // Kita parsing disini.
+        if (args) {
+          const fArgs = args.split(" ");
+          if (fArgs.length >= 3) {
+            handleZoneFlag(player, fArgs[0], fArgs[1], fArgs[2]);
+          } else {
+            player.sendMessage(`§7Available: ${getAllZones().map(z => z.name).join(", ")}`);
+            player.sendMessage("§cUsage: +zoneflag <name> <pvp|hostile> <true|false>");
+          }
+        } else {
+          player.sendMessage(`§7Available: ${getAllZones().map(z => z.name).join(", ")}`);
+          player.sendMessage("§cUsage: +zoneflag <name> <pvp|hostile> <true|false>");
+        }
+        return true;
+
+      case "zonerename":
+      case "renamezone":
+        if (args) {
+          const rArgs = args.split(" ");
+          if (rArgs.length >= 2) {
+            handleZoneRename(player, rArgs[0], rArgs[1]);
+          } else {
+            player.sendMessage(`§7Available: ${getAllZones().map(z => z.name).join(", ")}`);
+            player.sendMessage("§cUsage: +zonerename <oldName> <newName>");
+          }
+        } else {
+          player.sendMessage(`§7Available: ${getAllZones().map(z => z.name).join(", ")}`);
+          player.sendMessage("§cUsage: +zonerename <oldName> <newName>");
+        }
+        return true;
+
+      case "zoneinfo":
+      case "zonecheck":
+        handleZoneInfo(player, args);
         return true;
       case "butcher":
         handleButcher(player, args);

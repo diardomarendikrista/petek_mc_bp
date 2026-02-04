@@ -10,24 +10,12 @@ import { handleShopSignInteract } from "../features/economy/shop.js";
 import { showMainMenu } from "../features/general/menu.js";
 import { startPlayTimeTracker } from "../features/general/activity.js";
 import { handleDeath } from "../features/teleport/death.js";
+import { getProtectionFlags } from "../features/admin/protection.js";
 
 const menuCooldowns = new Map();
 const warningCooldowns = new Map(); // Cooldown untuk pesan warning
 
-const DANGEROUS_ITEMS = [
-  "minecraft:tnt",
-  "minecraft:flint_and_steel",
-  "minecraft:fire_charge",
-  "minecraft:lava_bucket",
-  "minecraft:water_bucket",
-  "minecraft:cod_bucket",
-  "minecraft:salmon_bucket",
-  "minecraft:pufferfish_bucket",
-  "minecraft:tropical_fish_bucket",
-  "minecraft:axolotl_bucket",
-  "minecraft:tadpole_bucket",
-  "minecraft:powder_snow_bucket",
-];
+import { DANGEROUS_ITEMS } from "./config.js";
 
 system.run(() => {
   console.warn(">> [Petek MC Mod System] Loaded!");
@@ -370,3 +358,58 @@ try {
 world.afterEvents.entityDie.subscribe((ev) => {
   handleDeath(ev);
 });
+
+// ===============================================
+// === PVP PROTECTION (Command Based: Weakness & Resistance) ===
+// ===============================================
+// User Request: "If you gave everyone in your safezone weakness level 255, they won’t be able to hit each other"
+// Logic:
+// - Safe Zone: Apply Weakness 255 (Can't Hit) & Resistance 255 (Can't be Hit)
+// - Unsafe Zone: Remove Effects (Optional, but good for instant PVP re-enable)
+
+system.runInterval(() => {
+  for (const player of world.getPlayers()) {
+    try {
+      // if (!player.isValid()) continue; // REMOVED: TypeError not a function
+
+      // DEBUG LOG 1: Valid Player
+      // console.warn(`[Debug] Checking ${player.name}`);
+
+      let isSafe = false;
+
+      // 1. Cek Plot (Always Safe)
+      if (isInsidePlotZone(player.location)) {
+        isSafe = true;
+        // console.warn(`[Debug] ${player.name} inside PLOT`);
+      }
+      // 2. Cek Custom Zone
+      else {
+        // console.warn(`[Debug] Checking Flags for ${player.name}`);
+        const flags = getProtectionFlags(player.location, player.dimension.id);
+        // console.warn(`[Debug] Flags: ${JSON.stringify(flags)}`);
+        if (flags.isProtected && !flags.pvp) {
+          isSafe = true;
+          // console.warn(`[Debug] ${player.name} inside CUSTOM SAFE`);
+        }
+      }
+
+      // 3. Apply / Clear Effects
+      if (isSafe) {
+        // console.warn(`[Debug] Attempting runCommand for ${player.name}`);
+
+        // Cek dulu apakah object player punya method runCommand (Manual Check)
+        if (typeof player.runCommand !== 'function') {
+          console.warn(`[CRITICAL] player.runCommand is NOT a function for ${player.name}! Type: ${typeof player.runCommand}`);
+          // console.warn(`[CRITICAL] Keys: ${Object.keys(player).join(",")}`);
+        }
+
+        player.runCommand(`effect "${player.name}" weakness 2 255 true`);
+        player.runCommand(`effect "${player.name}" resistance 2 255 true`);
+
+        // console.warn(`[Debug] runCommand Success`);
+      }
+    } catch (e) {
+      console.warn(`[PVP Error] ${player?.name || 'Unknown'}: ${e} | Stack: ${e.stack}`);
+    }
+  }
+}, 10); // Check setiap 10 Tick (0.5 Detik)

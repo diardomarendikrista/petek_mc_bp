@@ -1,6 +1,7 @@
 import { world, system } from "@minecraft/server";
 import { getPlayerRoleLevel } from "../../core/utils.js";
 import { addMoney, formatMoney, getBalance } from "../economy/economy.js";
+import { BANNED_MOBS } from "../../core/config.js";
 
 // === KONFIGURASI ===
 const CONF = {
@@ -630,54 +631,20 @@ export function isInsidePlotZone(location) {
 // === ANTI-MOB SYSTEM (DOUBLE LAYER) ===
 // =========================================
 
-// LIST LENGKAP DENGAN VARIAN KUDA & VILLAGER
-const BANNED_MOBS = [
-  // 1. ZOMBIE FAMILY
-  "minecraft:zombie",
-  "minecraft:zombie_villager",
-  "minecraft:zombie_villager_v2",
-  "minecraft:husk",
-  "minecraft:drowned",
-
-  // 2. SKELETON FAMILY
-  "minecraft:skeleton",
-  "minecraft:stray",
-  "minecraft:wither_skeleton",
-
-  // 3. MOUNTS & JOCKEYS
-  "minecraft:zombie_horse",
-  "minecraft:skeleton_horse",
-  "minecraft:spider",
-  "minecraft:cave_spider",
-
-  // 4. CREEPY & RAID
-  "minecraft:creeper",
-  "minecraft:witch",
-  "minecraft:slime",
-  "minecraft:phantom",
-  "minecraft:pillager",
-  "minecraft:vindicator",
-  "minecraft:evoker",
-  "minecraft:ravager",
-  "minecraft:vex",
-  "minecraft:enderman",
-
-  // 5. NETHER (Opsional)
-  "minecraft:piglin",
-  "minecraft:zoglin",
-  "minecraft:blaze",
-  "minecraft:ghast",
-  "minecraft:magma_cube",
-];
+import { checkCustomProtection, isZoneProtected, getProtectionFlags } from "../admin/protection.js";
 
 // LAYER 1: Event Listener (Cegah saat baru lahir)
 world.afterEvents.entitySpawn.subscribe((ev) => {
   const entity = ev.entity;
   try {
     if (BANNED_MOBS.includes(entity.typeId)) {
+      // Cek Flags
+      const flags = getProtectionFlags(entity.location, entity.dimension.id);
+
+      // Logic: Hapus jika di Plot Zone ATAU di Custom Zone yang hostile=false
       if (
-        entity.dimension.id === CONF.DIMENSION &&
-        isInsidePlotZone(entity.location)
+        (entity.dimension.id === CONF.DIMENSION && isInsidePlotZone(entity.location)) ||
+        !flags.hostile
       ) {
         entity.remove();
       }
@@ -704,8 +671,10 @@ system.runInterval(() => {
       // Validasi ganda: Pastikan ID nya memang ada di BANNED_MOBS
       // (Jaga-jaga kalau ada mob "monster" yang baik/custom addon)
       if (BANNED_MOBS.includes(entity.typeId)) {
-        // Cek lokasi (Matematika sederhana, ringan)
-        if (isInsidePlotZone(entity.location)) {
+        const flags = getProtectionFlags(entity.location, entity.dimension.id);
+
+        // Logic Sama: PlotZone OR !hostile
+        if (isInsidePlotZone(entity.location) || !flags.hostile) {
           entity.remove();
         }
       }

@@ -49,3 +49,58 @@ export const HOME_LIMITS = {
   MOD: 50, // Staff butuh banyak buat nandain tempat
   OP: 100, // Owner bebas
 };
+
+// === PROTECTION CONFIG ===
+export const DANGEROUS_ITEMS = [
+  "minecraft:tnt",
+  "minecraft:flint_and_steel",
+  "minecraft:fire_charge",
+  "minecraft:lava_bucket",
+  "minecraft:water_bucket",
+  "minecraft:cod_bucket",
+  "minecraft:salmon_bucket",
+  "minecraft:pufferfish_bucket",
+  "minecraft:tropical_fish_bucket",
+  "minecraft:axolotl_bucket",
+  "minecraft:tadpole_bucket",
+  "minecraft:powder_snow_bucket",
+];
+
+export const BANNED_MOBS = [
+  // 1. ZOMBIE FAMILY
+  "minecraft:zombie",
+  "minecraft:zombie_villager",
+  "minecraft:zombie_villager_v2",
+  "minecraft:husk",
+  "minecraft:drowned",
+
+  // 2. SKELETON FAMILY
+  "minecraft:skeleton",
+  "minecraft:stray",
+  "minecraft:wither_skeleton",
+
+  // 3. MOUNTS & JOCKEYS
+  "minecraft:zombie_horse",
+  "minecraft:skeleton_horse",
+  "minecraft:spider",
+  "minecraft:cave_spider",
+
+  // 4. CREEPY & RAID
+  "minecraft:creeper",
+  "minecraft:witch",
+  "minecraft:slime",
+  "minecraft:phantom",
+  "minecraft:pillager",
+  "minecraft:vindicator",
+  "minecraft:evoker",
+  "minecraft:ravager",
+  "minecraft:vex",
+  "minecraft:enderman",
+
+  // 5. NETHER (Opsional)
+  "minecraft:piglin",
+  "minecraft:zoglin",
+  "minecraft:blaze",
+  "minecraft:ghast",
+  "minecraft:magma_cube",
+];

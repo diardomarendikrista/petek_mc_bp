@@ -1,14 +1,22 @@
-import { ROLES, RANK_REQUIREMENTS } from "../../core/config.js";
+import { ROLES, RANK_REQUIREMENTS, CMD_PREFIX } from "../../core/config.js";
 import { getPlayerRoleLevel } from "../../core/utils.js";
 
 // === LOGIKA MENU ===
 export function sendInfoMenu(player, userLevel) {
   let roleName = "Newbie";
 
-  if (userLevel >= 99) roleName = "OWNER";
-  else if (userLevel >= 30) roleName = "MODERATOR";
-  else if (userLevel >= 20) roleName = "VVIP";
-  else if (userLevel >= 10) roleName = "VIP";
+  // Cari Role Name berdasarkan level
+  // Menggunakan ROLES dari config agar konsisten
+  const matchedEntry = Object.entries(ROLES).find(([key, val]) => val.level === userLevel);
+  if (matchedEntry) {
+    // Gunakan nama key (misal "OP", "ADMIN") atau parse dari prefix
+    // Kita gunakan Key saja biar rapi, atau mapping manual jika perlu.
+    // Mapping: OP -> OWNER, MOD -> MODERATOR
+    const key = matchedEntry[0];
+    if (key === "OP") roleName = "OWNER";
+    else if (key === "MOD") roleName = "MODERATOR";
+    else roleName = key; // ADMIN, BUILDER, VVIP, VIP, VETERAN, SENIOR, MEMBER
+  }
 
   // Header Menu
   player.sendMessage(`§e=== STATUS AKUN ===`);
@@ -115,13 +123,13 @@ export function handleRankList(player) {
 
 export function sendHelpMenu(player, level) {
   // Header
-  const CMD_PREFIX = "+";
+  // CMD_PREFIX sudah diimport dari config.js
   let msg = `§2=== §aPETEK MC MOD HELP §2===\n`;
   msg += `§7GUI Menu: §e${CMD_PREFIX}menu §7(atau Klik Stick)\n`;
 
   // === 0. PUBLIC (Level 0+) ===
   msg += `\n§e[NEWBIE]`;
-  msg += `\n§7Land: §fclaim, unclaim, plot, warp plot`;
+  msg += `\n§7Land: §fclaim, unclaim, plot, warp plot, resetplot`;
   msg += `\n§7Social: §ftpa, tpaccept, tpdeny, ranks, spawn`;
   msg += `\n§7Eco: §fbal, pay <nama> <jml>, sell, price`;
 
@@ -152,7 +160,7 @@ export function sendHelpMenu(player, level) {
   // === 5. VVIP (Level 20+) ===
   if (level >= 20) {
     msg += `\n\n§6[VVIP]`;
-    msg += `\n§fjump (Fly Mode), speed, tp <player>`;
+    msg += `\n§fjump (Fly Mode), speed, tp <player>, restore`;
   }
 
   // === 6. BUILDER (Level 30+) ===
@@ -160,14 +168,15 @@ export function sendHelpMenu(player, level) {
     msg += `\n\n§a[BUILDER]`;
     msg += `\n§7Creative: §fgmc, gms, day`;
     msg += `\n§7Tools: §fpos1, pos2, fill, undo, copy, paste`;
+    msg += `\n§7WorldEdit: §f//pos1, //pos2, //copy, //paste, //undo`;
   }
 
   // === 5. MODERATOR (Level 50+) ===
   if (level >= 50) {
     msg += `\n\n§9[MODERATOR]`;
-    msg += `\n§7Protect: §fprotect <nama>, unprotect <nama>`;
-    msg += `\n§7Staff: §ftphere <nama> (Summon), vanish, spec, butcher, checkbal <nama>`;
-    msg += `\n§7Punish: §fkick, tempban <nama> <menit>, tempmute <nama> <menit>, mute, unmute`;
+    msg += `\n§7Protect: §fprotect <name>, unprotect, zoneflag, zonerename, zoneinfo`;
+    msg += `\n§7Staff: §ftphere, vanish, spec, butcher, checkbal`;
+    msg += `\n§7Punish: §fkick, mute, unmute, tempmute, tempban`;
     msg += `\n§7Rank: §fsetvip, setvvip, removetag, reset`;
     msg += `\n§7Warps: §fsetwarp, delwarp`;
   }
@@ -181,7 +190,7 @@ export function sendHelpMenu(player, level) {
   // === 7. OWNER / OP (Level 99+) ===
   if (level >= 99) {
     msg += `\n\n§4[OWNER]`;
-    msg += `\n§fsetadmin, setworldspawn, addmoney, resetplots`;
+    msg += `\n§fsetadmin, addmoney, resetplots`;
   }
 
   player.sendMessage(msg);

@@ -11,7 +11,7 @@ function getZone(name) {
   const d = world.getDynamicProperty(`prot_${name.toLowerCase()}`);
   return d ? JSON.parse(d) : null;
 }
-function getAllZones() {
+export function getAllZones() {
   return world
     .getDynamicPropertyIds()
     .filter((id) => id.startsWith("prot_"))
@@ -63,10 +63,12 @@ export function handleProtect(player, zoneName) {
     dim: player.dimension.id,
     creator: player.name,
     created_at: Date.now(),
+    flags: { pvp: false, hostile: false }, // Default Flags
   };
 
   saveZone(zoneName, zoneData);
   player.sendMessage(`§aArea '${zoneName}' berhasil diamankan!`);
+  player.sendMessage(`§7Flags Default: PVP=False, Hostile=False`);
   player.sendMessage(
     `§7Size: ${Math.abs(sel.max.x - sel.min.x) + 1}x${Math.abs(sel.max.z - sel.min.z) + 1}`,
   );
@@ -85,7 +87,7 @@ export function handleUnprotect(player, zoneName) {
 
     // UPDATE: Tampilkan Nama + Koordinat biar jelas
     const all = getAllZones()
-      .map((z) => `§e${z.name} §7[${z.min.x}, ${z.min.z}]`)
+      .map((z) => `§e${z.name} §7[${z.min.x}, ${z.min.z}] Flags: ${JSON.stringify(z.flags || {})}`)
       .join("\n"); // Pakai Enter (\n) biar rapi ke bawah
 
     player.sendMessage(`§7=== List Zone ===\n${all}`);
@@ -103,6 +105,87 @@ export function handleUnprotect(player, zoneName) {
   deleteZone(zoneName);
   player.sendMessage(`§eZone '${zoneName}' berhasil dihapus (Unprotected).`);
   player.playSound("random.break");
+}
+
+export function handleZoneFlag(player, zoneName, flagKey, flagValue) {
+  if (getPlayerRoleLevel(player) < 50) return;
+
+  if (!zoneName || !flagKey || !flagValue) {
+    player.sendMessage("§cUsage: +zoneflag <name> <pvp|hostile> <true|false>");
+    return;
+  }
+
+  const zone = getZone(zoneName);
+  if (!zone) {
+    player.sendMessage(`§cZone '${zoneName}' tidak ditemukan.`);
+    return;
+  }
+
+  // Normalisasi input
+  const key = flagKey.toLowerCase();
+  const val = flagValue.toLowerCase() === "true";
+
+  if (key !== "pvp" && key !== "hostile") {
+    player.sendMessage("§cFlag valid: pvp, hostile");
+    return;
+  }
+
+  // Init flags jika belum ada (backward compatibility)
+  if (!zone.flags) zone.flags = { pvp: false, hostile: false };
+
+  zone.flags[key] = val;
+  saveZone(zoneName, zone);
+  player.sendMessage(`§aSet Flag '${key}' zone '${zoneName}' -> ${val}`);
+}
+
+export function handleZoneRename(player, oldName, newName) {
+  if (getPlayerRoleLevel(player) < 50) return;
+
+  if (!oldName || !newName) {
+    player.sendMessage("§cUsage: +renamedzone <oldName> <newName>");
+    return;
+  }
+
+  const oldZone = getZone(oldName);
+  if (!oldZone) {
+    player.sendMessage(`§cZone '${oldName}' tidak ditemukan.`);
+    return;
+  }
+
+  if (getZone(newName)) {
+    player.sendMessage(`§cNama baru '${newName}' sudah dipakai!`);
+    return;
+  }
+
+  // Save new, delete old
+  saveZone(newName, oldZone);
+  deleteZone(oldName);
+  player.sendMessage(`§aSukses rename '${oldName}' -> '${newName}'`);
+}
+
+export function handleZoneInfo(player, zoneName) {
+  if (!zoneName) {
+    const all = getAllZones().map((z) => `§e- ${z.name}`).join("\n");
+    player.sendMessage(`§7Zones: \n${all}`);
+    player.sendMessage("§cUsage: +zoneinfo <name>");
+    return;
+  }
+
+  const zone = getZone(zoneName);
+  if (!zone) {
+    player.sendMessage(`§cZone '${zoneName}' tidak ditemukan.`);
+    return;
+  }
+
+  const flags = zone.flags || { pvp: false, hostile: false };
+
+  player.sendMessage(`§a=== Zone Info: ${zoneName} ===`);
+  player.sendMessage(`§7Creator: §e${zone.creator}`);
+  player.sendMessage(`§7Dimension: §b${zone.dim}`);
+  player.sendMessage(`§7Location: §f(${zone.min.x},${zone.min.z}) to (${zone.max.x},${zone.max.z})`);
+  player.sendMessage(`§7Flags:`);
+  player.sendMessage(`  §f- PVP: ${flags.pvp ? "§aALLOWED" : "§cBLOCKED"}`);
+  player.sendMessage(`  §f- Hostile: ${flags.hostile ? "§aALLOWED" : "§cBLOCKED"}`);
 }
 
 // === LISTENER CHECKER ===
@@ -163,4 +246,35 @@ export function isZoneProtected(location, dimensionId) {
     }
   }
   return false; // AMAN (KOSONG)
+}
+
+// Helper baru untuk cek Flags
+export function getProtectionFlags(location, dimensionId) {
+  const zones = getAllZones();
+  // Default: Aman (PVP On di wild, Hostile On di wild)
+  // Tapi user minta "Disable PVP on protected area". 
+  // Jadi jika masuk zona => PVP OFF (kecuali flag=true).
+
+  // Kita cari zona yang meng-cover lokasi ini.
+  for (const zone of zones) {
+    if (zone.dim !== dimensionId) continue;
+    if (
+      location.x >= zone.min.x &&
+      location.x <= zone.max.x &&
+      location.y >= zone.min.y &&
+      location.y <= zone.max.y &&
+      location.z >= zone.min.z &&
+      location.z <= zone.max.z
+    ) {
+      // Found Zone
+      const flags = zone.flags || { pvp: false, hostile: false };
+      return {
+        isProtected: true,
+        pvp: flags.pvp === true, // Default False inside zone, unless true
+        hostile: flags.hostile === true // Default False inside zone, unless true
+      };
+    }
+  }
+
+  return { isProtected: false, pvp: true, hostile: true }; // Wild area: Bebas
 }
