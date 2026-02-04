@@ -25,7 +25,7 @@ function deleteZone(name) {
 }
 
 // === COMMAND HANDLER ===
-export function handleProtect(player, zoneName) {
+export function handleProtect(player, args) {
   if (getPlayerRoleLevel(player) < 50) {
     player.sendMessage(
       "§cHanya Moderator (Level 50+) yang bisa membuat proteksi custom.",
@@ -33,10 +33,15 @@ export function handleProtect(player, zoneName) {
     return;
   }
 
-  if (!zoneName) {
-    player.sendMessage("§cUsage: +protect <NamaArea>");
+  if (!args) {
+    player.sendMessage("§cUsage: +protect <Name> [y|full]");
     return;
   }
+
+  // Split args into name and optional param
+  const parts = args.trim().split(" ");
+  const zoneName = parts[0];
+  const mode = parts.length > 1 ? parts[1].toLowerCase() : null;
 
   const existingZone = getZone(zoneName);
   if (existingZone) {
@@ -57,6 +62,19 @@ export function handleProtect(player, zoneName) {
     return;
   }
 
+  // Check valid selection
+  if (sel.min.x === sel.max.x && sel.min.z === sel.max.z && sel.min.y === sel.max.y) {
+    // Optional: Warning for single block selection? No, might be intended.
+  }
+
+  // Handle Full Height Mode
+  let isFullHeight = false;
+  if (mode === "y" || mode === "full" || mode === "expand") {
+    sel.min.y = -64;
+    sel.max.y = 320;
+    isFullHeight = true;
+  }
+
   const zoneData = {
     min: sel.min,
     max: sel.max,
@@ -68,6 +86,9 @@ export function handleProtect(player, zoneName) {
 
   saveZone(zoneName, zoneData);
   player.sendMessage(`§aArea '${zoneName}' berhasil diamankan!`);
+  if (isFullHeight) {
+    player.sendMessage("§b(Full Height Protection: Y -64 to 320)");
+  }
   player.sendMessage(`§7Flags Default: PVP=False, Hostile=False`);
   player.sendMessage(
     `§7Size: ${Math.abs(sel.max.x - sel.min.x) + 1}x${Math.abs(sel.max.z - sel.min.z) + 1}`,
