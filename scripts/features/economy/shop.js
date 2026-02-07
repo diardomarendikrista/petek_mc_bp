@@ -1,5 +1,6 @@
 import { world, system } from "@minecraft/server";
 import { addMoney, formatMoney, getBalance } from "./economy.js";
+import { SERVER_SHOP_ITEMS } from "./shop_items.js";
 // UI moved to shop_ui.js
 import { showShopUI } from "./shop_ui.js";
 import { getPlayerRoleLevel } from "../../core/utils.js";
@@ -16,23 +17,6 @@ export function getTexture(item) {
   return `textures/items/${id}`;
 }
 
-// === DAFTAR HARGA BARANG (Per 1 Pcs) ===
-// Ini daftar harga referensi jika pakai command /sell (command lama)
-const PRICE_LIST = {
-  "minecraft:cobblestone": 5,
-  "minecraft:dirt": 2,
-  "minecraft:log": 10,
-  "minecraft:iron_ingot": 50,
-  "minecraft:gold_ingot": 100,
-  "minecraft:diamond": 500,
-  "minecraft:emerald": 1000,
-  "minecraft:wheat": 15,
-  "minecraft:carrot": 15,
-  "minecraft:potato": 15,
-  "minecraft:rotten_flesh": 5,
-  "minecraft:bone": 5,
-};
-
 // === FITUR JUAL (COMMAND) ===
 export function handleSell(player) {
   const inventory = player.getComponent("inventory");
@@ -47,22 +31,41 @@ export function handleSell(player) {
     return;
   }
 
-  const pricePerItem = PRICE_LIST[item.typeId];
-  if (!pricePerItem) {
-    player.sendMessage(`§cItem §f${item.typeId} §ctidak laku di sini.`);
+  // 1. Cari Item di Database
+  // Kita cari berdasarkan ID.
+  // Note: SERVER_SHOP_ITEMS ID pakai "minecraft:diamond", item.typeId juga sama.
+  const shopItem = SERVER_SHOP_ITEMS.find((i) => i.id === item.typeId);
+
+  if (!shopItem) {
+    player.sendMessage(`§cItem §f${item.typeId}§c tidak laku di sini.`);
     return;
   }
 
+  // 2. Cek Kategori (Selective Sell)
+  // Allowed: Ores, Food, Drops
+  const allowedCategories = ["Ores", "Food", "Drops"];
+  if (!allowedCategories.includes(shopItem.category)) {
+    player.sendMessage(`§cItem ini tidak bisa dijual!`);
+    player.sendMessage(`§7Kategori: §f${shopItem.category} §7(Hanya Ores, Food, & Drops yang laku).`);
+    return;
+  }
+
+  // 3. Hitung Harga (20% dari Harga Beli)
+  const sellPrice = Math.floor(shopItem.price * 0.2);
+
+  // Safety: Minimum harga jual 1 (kecuali kalau emang 0)
+  const finalPrice = Math.max(1, sellPrice);
+
   const amount = item.amount;
-  const totalEarnings = pricePerItem * amount;
+  const totalEarnings = finalPrice * amount;
 
   container.setItem(selectedSlot, undefined);
   addMoney(player, totalEarnings);
 
   player.sendMessage(
-    `§aTerjual §f${amount}x ${item.typeId.replace("minecraft:", "")}`,
+    `§aTerjual §f${amount}x ${shopItem.name}`,
   );
-  player.sendMessage(`§aKamu dapat: §e${formatMoney(totalEarnings)}`);
+  player.sendMessage(`§aKamu dapat: §e${formatMoney(totalEarnings)} §7(${formatMoney(finalPrice)}/pcs)`);
   player.playSound("random.orb");
 }
 
@@ -77,10 +80,20 @@ export function handlePriceCheck(player) {
     return;
   }
 
-  const price = PRICE_LIST[item.typeId];
-  if (price) {
+  const shopItem = SERVER_SHOP_ITEMS.find((i) => i.id === item.typeId);
+
+  if (shopItem) {
+    // Cek Kategori
+    const allowedCategories = ["Ores", "Food", "Drops"];
+    if (!allowedCategories.includes(shopItem.category)) {
+      player.sendMessage(`§cItem: §f${shopItem.name}`);
+      player.sendMessage(`§cStatus: §Cannot Sell (Category: ${shopItem.category})`);
+      return;
+    }
+
+    const sellPrice = Math.max(1, Math.floor(shopItem.price * 0.2));
     player.sendMessage(
-      `§eHarga §f${item.typeId}§e: ${formatMoney(price)} / pcs.`,
+      `§eItem: §f${shopItem.name}\n§eHarga Jual: §a${formatMoney(sellPrice)} / pcs`
     );
   } else {
     player.sendMessage(`§cItem ini tidak memiliki harga jual.`);
