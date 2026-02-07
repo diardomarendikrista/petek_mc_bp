@@ -54,6 +54,7 @@ import { handleCopy, handlePaste } from "../features/admin/clipboard.js";
 import { handleUndo } from "../features/admin/undo.js";
 import { handlePay, handleBalance, handleAddMoney, handleCheckBalanceOther } from "../features/economy/economy.js";
 import { handleSell, handlePriceCheck } from "../features/economy/shop.js";
+import { showShopUI } from "../features/economy/shop_ui.js";
 import { handleButcher } from "../features/admin/admin.js";
 
 // [REVERTED] COMMAND_REGISTRY removed as per user request for simplicity.
@@ -146,6 +147,22 @@ export function executeCommand(player, action, messageArgs) {
       handlePriceCheck(player); // Cek harga
       return true;
 
+    // UI SHOP (Conditional Access)
+    // UI SHOP (Conditional Access)
+    case "shop":
+    case "market":
+      // Level 3 = Veteran
+      if (userLevel >= 3) {
+        player.sendMessage("§eMenu akan terbuka dalam 2 detik... (segera tutup chat!!)");
+        system.runTimeout(() => {
+          showShopUI(player);
+        }, 40);
+      } else {
+        player.sendMessage("§c[!] Akses Ditolak. Minimal Rank: Veteran.");
+        player.playSound("mob.villager.no");
+      }
+      return true;
+
   }
 
   // ====================================================
@@ -208,6 +225,8 @@ export function executeCommand(player, action, messageArgs) {
       case "nv":
         toggleEffect(player, MODES.NV, "night_vision", 0, "§b>> Mata Elang");
         return true;
+
+      // VIP Access to Shop Command (Handled in Public Switch)
     }
   }
 

@@ -1,6 +1,20 @@
 import { world, system } from "@minecraft/server";
 import { addMoney, formatMoney, getBalance } from "./economy.js";
+// UI moved to shop_ui.js
+import { showShopUI } from "./shop_ui.js";
 import { getPlayerRoleLevel } from "../../core/utils.js";
+
+// Helper Texture
+export function getTexture(item) {
+  if (item.texture) return item.texture;
+  // Fallback Logic
+  const id = item.id.replace("minecraft:", "");
+  // Cek apakah block atau item (simple heuristic)
+  if (id.includes("log") || id.includes("stone") || id.includes("dirt") || id.includes("grass") || id.includes("block")) {
+    return `textures/blocks/${id}`;
+  }
+  return `textures/items/${id}`;
+}
 
 // === DAFTAR HARGA BARANG (Per 1 Pcs) ===
 // Ini daftar harga referensi jika pakai command /sell (command lama)
@@ -73,6 +87,8 @@ export function handlePriceCheck(player) {
   }
 }
 
+// UI Logic has been moved to shop_ui.js
+
 // ==========================================
 // === FITUR SIGN SHOP (INTERAKSI) ===
 // ==========================================
@@ -94,8 +110,54 @@ export function handleShopSignInteract(event) {
   const rawLines = rawText.split("\n");
   const cleanLines = rawText.replace(/§./g, "").split("\n"); // Hapus kode warna
 
-  // Cek Header: [SHOP]
+  // Cek Header: [SHOP] atau [MARKET]
   const header = cleanLines[0] ? cleanLines[0].trim() : "";
+
+  // === FITUR BARU: MARKET UI SIGN ===
+  if (header.toUpperCase() === "[MARKET]") {
+    const isVerified = rawLines[0].includes("§1");
+    let category = cleanLines[1] ? cleanLines[1].trim() : "All";
+    if (!category) category = "All";
+
+    // A. VALIDASI (Jika belum berwarna biru)
+    if (!isVerified) {
+      event.cancel = true;
+
+      // Cek Permission (Builder / Level 30+)
+      if (getPlayerRoleLevel(player) < 30) {
+        system.run(() => {
+          player.sendMessage("§c[!] Sign Market ini belum divalidasi oleh Staff.");
+          player.playSound("mob.villager.no");
+        });
+        return;
+      }
+
+      // Proses Validasi
+      system.run(() => {
+        // Format Sign:
+        // Baris 1: [MARKET] (Biru)
+        // Baris 2: Category (Hitam)
+        // Baris 3: Info
+        const newText = `§1§l[MARKET]\n§0${category}\n§8(Right Click)\n§7to Open`;
+
+        try {
+          signComp.setText(newText);
+          player.sendMessage(`§a[MARKET] Validated! Category: ${category}`);
+          player.playSound("random.levelup");
+        } catch (e) {
+          player.sendMessage("§c[Error] Gagal update sign.");
+        }
+      });
+      return;
+    }
+
+    // B. BUKA SHOP (Sudah Valid)
+    system.run(() => {
+      showShopUI(player, category);
+    });
+    return;
+  }
+
   if (header.toUpperCase() !== "[SHOP]") return;
 
   // Cek Status Verifikasi (Warna Biru §1 di header)

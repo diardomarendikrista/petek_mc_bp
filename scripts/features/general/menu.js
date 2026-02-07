@@ -10,6 +10,7 @@ import { showPlotUI } from "../plots/plot_ui.js";
 import { handleSpawn } from "../teleport/tpa.js";
 import { showSocialEcoUI } from "../economy/social_eco_ui.js";
 import { showStaffMenu } from "../admin/staff_ui.js";
+import { showShopUI } from "../economy/shop_ui.js";
 import { handleBack } from "../teleport/death.js";
 
 export function showMainMenu(player) {
@@ -39,6 +40,10 @@ export function showMainMenu(player) {
   if (level >= 3) {
     form.button("§lWARP\n§r§fJelajahi Server", "textures/items/ender_pearl");
     actions.push("warp");
+
+    // MARKET (Level 3 / Veteran)
+    form.button("§lMARKET\n§r§fBeli Barang (UI)", "textures/items/emerald");
+    actions.push("market");
   }
 
   // SOCIAL & ECO
@@ -87,6 +92,9 @@ export function showMainMenu(player) {
           break;
         case "warp":
           showWarpUI(player);
+          break;
+        case "market":
+          showShopUI(player);
           break;
         case "back":
           handleBack(player);
