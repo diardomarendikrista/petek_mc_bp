@@ -267,6 +267,18 @@ export function executeCommand(player, action, messageArgs) {
       case "day":
         player.runCommand("time set day");
         return true;
+      case "night":
+        player.runCommand("time set night");
+        return true;
+      case "wclear":
+        player.runCommand("weather clear");
+        return true;
+      case "wrain":
+        player.runCommand("weather rain");
+        return true;
+      case "wthunder":
+        player.runCommand("weather thunder");
+        return true;
 
       // SELECTION COMMANDS
       case "pos1":

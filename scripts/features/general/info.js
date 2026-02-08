@@ -166,7 +166,8 @@ export function sendHelpMenu(player, level) {
   // === 6. BUILDER (Level 30+) ===
   if (level >= 30) {
     msg += `\n\n§a[BUILDER]`;
-    msg += `\n§7Creative: §fgmc, gms, day`;
+    msg += `\n§7Creative: §fgmc, gms, day, night`;
+    msg += `\n§7Weather: §fwclear, wrain, wthunder`;
     msg += `\n§7Tools: §fpos1, pos2, fill, undo, copy, paste`;
     msg += `\n§7WorldEdit: §f//pos1, //pos2, //copy, //paste, //undo`;
   }

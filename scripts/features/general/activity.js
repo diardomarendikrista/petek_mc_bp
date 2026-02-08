@@ -77,8 +77,7 @@ function addActivityRank(player, targetRole) {
   // Announce / Sound
   player.playSound("random.levelup");
   player.sendMessage(
-    `§e§l[LEVEL UP]§r §7Selamat! Karena main §a${targetRole.level === 3 ? "24 Jam" : targetRole.level === 2 ? "5 Jam" : "1 Jam"
-    }§7, pangkatmu naik jadi ${targetRole.prefix}`,
+    `§e§l[LEVEL UP]§r §7Selamat! Karena main §a${RANK_REQUIREMENTS[targetRole.tag] / 60} Jam§7, pangkatmu naik jadi ${targetRole.prefix}`,
   );
   world.sendMessage(
     `§e>> §f${player.name} §7naik pangkat jadi ${targetRole.prefix}§7!`,
