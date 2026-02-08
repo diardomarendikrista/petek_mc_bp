@@ -2,6 +2,8 @@ import { world, system } from "@minecraft/server";
 import { getSelection } from "../general/selection.js";
 import { getPlayerRoleLevel } from "../../core/utils.js";
 
+const messageCooldowns = new Map(); // Cooldown untuk pesan proteksi
+
 // === DATABASE HELPERS ===
 // Kita simpan proteksi dengan prefix "prot_"
 function saveZone(name, data) {
@@ -211,7 +213,7 @@ export function handleZoneInfo(player, zoneName) {
 
 // === LISTENER CHECKER ===
 // Fungsi ini akan dipanggil di main.js
-export function checkCustomProtection(player, blockLocation) {
+export function checkCustomProtection(player, blockLocation, showWarning = true) {
   // Bypass: Minimal Builder (Level 30) agar Staff bisa kerja/renovasi
   if (getPlayerRoleLevel(player) >= 30) return true;
 
@@ -239,7 +241,13 @@ export function checkCustomProtection(player, blockLocation) {
       z <= zone.max.z
     ) {
       // Kena Zona Proteksi!
-      player.sendMessage(`§cHey! Area '${zone.name}' dilindungi.`);
+      const now = Date.now();
+      const lastMsg = messageCooldowns.get(player.name) || 0;
+
+      if (showWarning && (now - lastMsg > 2000)) {
+        player.sendMessage(`§cHey! Area '${zone.name}' dilindungi.`);
+        messageCooldowns.set(player.name, now);
+      }
       return false; // DILARANG
     }
   }

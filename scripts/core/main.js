@@ -214,7 +214,8 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
   }
 
   // A. Custom Protection (Admin Zone)
-  if (!checkCustomProtection(player, block.location)) {
+  const isSign = block.typeId.includes("sign");
+  if (!checkCustomProtection(player, block.location, !isSign)) {
     ev.cancel = true;
     return;
   }
