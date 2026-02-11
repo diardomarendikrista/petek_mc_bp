@@ -110,29 +110,41 @@ export function handleResetAllPlots(player) {
   player.sendMessage(`§a[SUKSES] Reset ${count} data.`);
 }
 
+const plotWarningCooldowns = new Map();
+
 export function checkPlotProtection(player, blockLoc) {
   if (getPlayerRoleLevel(player) >= 30) return true;
   const info = getPlotAt(blockLoc);
+
+  const sendWarning = (msg) => {
+    const now = Date.now();
+    const last = plotWarningCooldowns.get(player.name) || 0;
+    if (now - last > 750) {
+      player.sendMessage(msg);
+      plotWarningCooldowns.set(player.name, now);
+    }
+  };
+
   if (info.isBorder) {
-    player.sendMessage("§cBatas Dunia Plot.");
+    sendWarning("§cBatas Dunia Plot.");
     return false;
   }
   if (info.isSpawn) {
-    player.sendMessage("§cArea Spawn/Loby dilindungi.");
+    sendWarning("§cArea Spawn/Loby dilindungi.");
     return false;
   }
   if (info.isRoad) {
-    player.sendMessage("§cJangan rusak jalan umum.");
+    sendWarning("§cJangan rusak jalan umum.");
     return false;
   }
 
   const owner = getPlotOwner(info.id);
   if (!owner) {
-    player.sendMessage("§7Plot ini belum ada pemilik. Ketik §a+claim");
+    sendWarning("§7Plot ini belum ada pemilik. Ketik §a+claim");
     return false;
   }
   if (owner !== player.name) {
-    player.sendMessage(`§cIni wilayah milik ${owner}.`);
+    sendWarning(`§cIni wilayah milik ${owner}.`);
     return false;
   }
   return true;
