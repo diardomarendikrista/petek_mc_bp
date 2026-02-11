@@ -7,7 +7,7 @@ export const SERVER_SHOP_ITEMS = [
   { name: "Gold Ingot", id: "minecraft:gold_ingot", price: 100, category: "Ores" },
   { name: "Iron Ingot", id: "minecraft:iron_ingot", price: 50, category: "Ores" },
   { name: "Copper Ingot", id: "minecraft:copper_ingot", price: 25, category: "Ores" },
-  { name: "Emerald", id: "minecraft:emerald", price: 500, category: "Ores" },
+  { name: "Emerald", id: "minecraft:emerald", price: 500, category: "Ores", allow_sell: false },
   { name: "Coal", id: "minecraft:coal", price: 20, category: "Ores" },
   { name: "Charcoal", id: "minecraft:charcoal", price: 15, category: "Ores" },
   { name: "Quartz", id: "minecraft:quartz", price: 40, category: "Ores" },
@@ -84,7 +84,7 @@ export const SERVER_SHOP_ITEMS = [
   // === MOB DROPS ===
   { name: "Rotten Flesh", id: "minecraft:rotten_flesh", price: 5, category: "Drops" },
   { name: "Bone", id: "minecraft:bone", price: 10, category: "Drops" },
-  { name: "Gunpowder", id: "minecraft:gunpowder", price: 20, category: "Drops" },
+  // { name: "Gunpowder", id: "minecraft:gunpowder", price: 20, category: "Drops" },
   { name: "Spider Eye", id: "minecraft:spider_eye", price: 10, category: "Drops" },
   { name: "String", id: "minecraft:string", price: 10, category: "Drops" },
   { name: "Ender Pearl", id: "minecraft:ender_pearl", price: 50, category: "Drops" },
@@ -105,7 +105,7 @@ export const SERVER_SHOP_ITEMS = [
   { name: "Hopper", id: "minecraft:hopper", price: 100, category: "Redstone" },
   { name: "Dispenser", id: "minecraft:dispenser", price: 50, category: "Redstone" },
   { name: "Dropper", id: "minecraft:dropper", price: 40, category: "Redstone" },
-  { name: "TNT", id: "minecraft:tnt", price: 150, category: "Redstone" },
+  // { name: "TNT", id: "minecraft:tnt", price: 150, category: "Redstone" },
   { name: "Slime Block", id: "minecraft:slime", price: 250, category: "Redstone" },
   { name: "Honey Block", id: "minecraft:honey_block", price: 250, category: "Redstone" },
 ];

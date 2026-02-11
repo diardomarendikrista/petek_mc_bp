@@ -17,87 +17,73 @@ export function getTexture(item) {
   return `textures/items/${id}`;
 }
 
-// === FITUR JUAL (COMMAND) ===
-export function handleSell(player) {
+// === HELPER: Get Sell Info ===
+function getSellInfo(player) {
   const inventory = player.getComponent("inventory");
-  if (!inventory || !inventory.container) return;
+  if (!inventory || !inventory.container) return { error: "§cInventory tidak ditemukan." };
 
   const container = inventory.container;
   const selectedSlot = player.selectedSlotIndex;
   const item = container.getItem(selectedSlot);
 
   if (!item) {
-    player.sendMessage("§cTangan kosong! Pegang item yang mau dijual.");
-    return;
+    return { error: "§cTangan kosong! Pegang item yang mau dijual/dicek." };
   }
 
-  // 1. Cari Item di Database
-  // Kita cari berdasarkan ID.
-  // Note: SERVER_SHOP_ITEMS ID pakai "minecraft:diamond", item.typeId juga sama.
   const shopItem = SERVER_SHOP_ITEMS.find((i) => i.id === item.typeId);
 
   if (!shopItem) {
-    player.sendMessage(`§cItem §f${item.typeId}§c tidak laku di sini.`);
-    return;
+    return { error: `§cItem §f${item.typeId}§c tidak laku di sini.` };
   }
 
-  // 2. Cek Kategori (Selective Sell)
-  // Allowed: Ores, Food, Drops
+  // 1. Check Explicit allow_sell flag
+  if (shopItem.allow_sell === false) {
+    return { error: `§cItem: §f${shopItem.name}\n§cStatus: §fNot Sellable` };
+  }
+
+  // 2. Check Category
   const allowedCategories = ["Ores", "Food", "Drops"];
   if (!allowedCategories.includes(shopItem.category)) {
-    player.sendMessage(`§cItem ini tidak bisa dijual!`);
-    player.sendMessage(`§7Kategori: §f${shopItem.category} §7(Hanya Ores, Food, & Drops yang laku).`);
+    return { error: `§cItem: §f${shopItem.name}\n§cStatus: §fCannot Sell (Category: ${shopItem.category})` };
+  }
+
+  // 3. Calculate Price
+  const sellPrice = Math.max(1, Math.floor(shopItem.price * 0.2));
+
+  return { item, shopItem, sellPrice, container, selectedSlot };
+}
+
+// === FITUR JUAL (COMMAND) ===
+export function handleSell(player) {
+  const { error, item, shopItem, sellPrice, container, selectedSlot } = getSellInfo(player);
+
+  if (error) {
+    player.sendMessage(error);
     return;
   }
 
-  // 3. Hitung Harga (20% dari Harga Beli)
-  const sellPrice = Math.floor(shopItem.price * 0.2);
-
-  // Safety: Minimum harga jual 1 (kecuali kalau emang 0)
-  const finalPrice = Math.max(1, sellPrice);
-
   const amount = item.amount;
-  const totalEarnings = finalPrice * amount;
+  const totalEarnings = sellPrice * amount;
 
+  // Execute Sell
   container.setItem(selectedSlot, undefined);
   addMoney(player, totalEarnings);
 
-  player.sendMessage(
-    `§aTerjual §f${amount}x ${shopItem.name}`,
-  );
-  player.sendMessage(`§aKamu dapat: §e${formatMoney(totalEarnings)} §7(${formatMoney(finalPrice)}/pcs)`);
+  player.sendMessage(`§aTerjual §f${amount}x ${shopItem.name}`);
+  player.sendMessage(`§aKamu dapat: §e${formatMoney(totalEarnings)} §7(${formatMoney(sellPrice)}/pcs)`);
   player.playSound("random.orb");
 }
 
 // Fitur Cek Harga (Tanpa Jual)
 export function handlePriceCheck(player) {
-  const inventory = player.getComponent("inventory");
-  const container = inventory.container;
-  const item = container.getItem(player.selectedSlotIndex);
+  const { error, shopItem, sellPrice } = getSellInfo(player);
 
-  if (!item) {
-    player.sendMessage("§cPegang item untuk cek harga.");
+  if (error) {
+    player.sendMessage(error);
     return;
   }
 
-  const shopItem = SERVER_SHOP_ITEMS.find((i) => i.id === item.typeId);
-
-  if (shopItem) {
-    // Cek Kategori
-    const allowedCategories = ["Ores", "Food", "Drops"];
-    if (!allowedCategories.includes(shopItem.category)) {
-      player.sendMessage(`§cItem: §f${shopItem.name}`);
-      player.sendMessage(`§cStatus: §Cannot Sell (Category: ${shopItem.category})`);
-      return;
-    }
-
-    const sellPrice = Math.max(1, Math.floor(shopItem.price * 0.2));
-    player.sendMessage(
-      `§eItem: §f${shopItem.name}\n§eHarga Jual: §a${formatMoney(sellPrice)} / pcs`
-    );
-  } else {
-    player.sendMessage(`§cItem ini tidak memiliki harga jual.`);
-  }
+  player.sendMessage(`§eItem: §f${shopItem.name}\n§eHarga Jual: §a${formatMoney(sellPrice)} / pcs`);
 }
 
 // UI Logic has been moved to shop_ui.js
