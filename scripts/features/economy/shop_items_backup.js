@@ -2,20 +2,20 @@
 // === DAFTAR BARANG UI SHOP ===
 export const SERVER_SHOP_ITEMS = [
   // === ORES & MINERALS ===
-  { name: "Diamond", id: "minecraft:diamond", price: 400, category: "Ores" },
-  { name: "Netherite Ingot", id: "minecraft:netherite_ingot", price: 2500, category: "Ores" },
-  { name: "Gold Ingot", id: "minecraft:gold_ingot", price: 50, category: "Ores" },
-  { name: "Iron Ingot", id: "minecraft:iron_ingot", price: 25, category: "Ores" },
-  { name: "Copper Ingot", id: "minecraft:copper_ingot", price: 15, category: "Ores" },
-  { name: "Emerald", id: "minecraft:emerald", price: 400, category: "Ores" },
+  { name: "Diamond", id: "minecraft:diamond", price: 1000, category: "Ores" },
+  { name: "Netherite Ingot", id: "minecraft:netherite_ingot", price: 5000, category: "Ores" },
+  { name: "Gold Ingot", id: "minecraft:gold_ingot", price: 100, category: "Ores" },
+  { name: "Iron Ingot", id: "minecraft:iron_ingot", price: 50, category: "Ores" },
+  { name: "Copper Ingot", id: "minecraft:copper_ingot", price: 25, category: "Ores" },
+  { name: "Emerald", id: "minecraft:emerald", price: 500, category: "Ores", allow_sell: false },
   { name: "Coal", id: "minecraft:coal", price: 20, category: "Ores" },
   { name: "Charcoal", id: "minecraft:charcoal", price: 15, category: "Ores" },
-  { name: "Quartz", id: "minecraft:quartz", price: 25, category: "Ores" },
-  { name: "Amethyst Shard", id: "minecraft:amethyst_shard", price: 40, category: "Ores" },
-  { name: "Lapis Lazuli", id: "minecraft:lapis_lazuli", price: 20, category: "Ores" },
-  { name: "Raw Iron", id: "minecraft:raw_iron", price: 15, category: "Ores" },
-  { name: "Raw Gold", id: "minecraft:raw_gold", price: 35, category: "Ores" },
-  { name: "Raw Copper", id: "minecraft:raw_copper", price: 10, category: "Ores" },
+  { name: "Quartz", id: "minecraft:quartz", price: 40, category: "Ores" },
+  { name: "Amethyst Shard", id: "minecraft:amethyst_shard", price: 60, category: "Ores" },
+  { name: "Lapis Lazuli", id: "minecraft:lapis_lazuli", price: 30, category: "Ores" },
+  { name: "Raw Iron", id: "minecraft:raw_iron", price: 30, category: "Ores" },
+  { name: "Raw Gold", id: "minecraft:raw_gold", price: 60, category: "Ores" },
+  { name: "Raw Copper", id: "minecraft:raw_copper", price: 15, category: "Ores" },
 
   // === FOOD & FARMING ===
   { name: "Raw Beef", id: "minecraft:beef", price: 12, category: "Food" },

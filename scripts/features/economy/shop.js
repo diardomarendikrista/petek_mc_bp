@@ -36,19 +36,19 @@ function getSellInfo(player) {
     return { error: `§cItem §f${item.typeId}§c tidak laku di sini.` };
   }
 
-  // 1. Check Explicit allow_sell flag
+  // Check Explicit allow_sell flag
   if (shopItem.allow_sell === false) {
     return { error: `§cItem: §f${shopItem.name}\n§cStatus: §fNot Sellable` };
   }
 
-  // 2. Check Category
-  const allowedCategories = ["Ores", "Food", "Drops"];
-  if (!allowedCategories.includes(shopItem.category)) {
-    return { error: `§cItem: §f${shopItem.name}\n§cStatus: §fCannot Sell (Category: ${shopItem.category})` };
-  }
+  // Check Category (now is promo!!)
+  // const allowedCategories = ["Ores", "Food", "Drops"];
+  // if (!allowedCategories.includes(shopItem.category)) {
+  //   return { error: `§cItem: §f${shopItem.name}\n§cStatus: §fCannot Sell (Category: ${shopItem.category})` };
+  // }
 
-  // 3. Calculate Price
-  const sellPrice = Math.max(1, Math.floor(shopItem.price * 0.2));
+  // Calculate Price (default 0.2, now is promo!!)
+  const sellPrice = Math.max(1, Math.floor(shopItem.price * 0.5));
 
   return { item, shopItem, sellPrice, container, selectedSlot };
 }
@@ -95,13 +95,13 @@ export function handlePriceCheck(player) {
 export function handleShopSignInteract(event) {
   const { block, player } = event;
 
-  // 1. Cek Blok apakah Sign
+  // Cek Blok apakah Sign
   const isSign = block.typeId.includes("sign");
   if (!isSign) return;
   const signComp = block.getComponent("minecraft:sign");
   if (!signComp) return;
 
-  // 2. Baca Text
+  // Baca Text
   const rawText = signComp.getText();
   if (!rawText) return;
 
@@ -189,18 +189,18 @@ export function handleShopSignInteract(event) {
       const amountInput = cleanLines[2] ? cleanLines[2].trim() : "1";
       let itemNameInput = cleanLines[3] ? cleanLines[3].trim() : "";
 
-      // 1. Cek Harga (Wajib Angka)
+      // Cek Harga (Wajib Angka)
       const price = parseInt(priceInput);
       if (isNaN(price) || price <= 0) {
         player.sendMessage("§c[Error] Baris 2 (Harga) harus angka positif.");
         return;
       }
 
-      // 2. Cek Qty (Default 1)
+      // Cek Qty (Default 1)
       let amount = parseInt(amountInput);
       if (isNaN(amount) || amount <= 0) amount = 1;
 
-      // 3. Cek Item (Line 4)
+      // Cek Item (Line 4)
       let finalItemID = "";
 
       // Jika kosong atau "hand", ambil dari tangan
@@ -235,7 +235,7 @@ export function handleShopSignInteract(event) {
 
       const displayName = finalItemID.replace("minecraft:", "");
 
-      // 4. Update Sign jadi Valid (LAYOUT FIX)
+      // Update Sign jadi Valid (LAYOUT FIX)
       // Baris 1: [SHOP] (Biru)
       // Baris 2: $ Harga (Hijau Tua)
       // Baris 3: Qty: Jumlah (Hitam)
@@ -270,7 +270,7 @@ export function handleShopSignInteract(event) {
     // Baris 3: Qty: 64
     // Baris 4: diamond
 
-    // 1. Parsing Data
+    // Parsing Data
     // Baris 2: Ambil angka saja (buang simbol $)
     const priceStr = cleanLines[1].replace(/[^0-9]/g, "");
     // Baris 3: Ambil angka saja (buang "Qty:")
@@ -281,7 +281,7 @@ export function handleShopSignInteract(event) {
     const price = parseInt(priceStr);
     const amount = parseInt(amountStr);
 
-    // 2. Validasi Data
+    // Validasi Data
     if (!itemID || isNaN(price) || isNaN(amount)) {
       player.sendMessage("§c[Error] Data toko rusak/tidak terbaca.");
       return;
@@ -299,7 +299,7 @@ export function handleShopSignInteract(event) {
       itemID = "minecraft:" + itemID;
     }
 
-    // 3. Cek Uang
+    // Cek Uang
     const balance = getBalance(player);
     if (balance < price) {
       player.sendMessage(`§cUang tidak cukup! Butuh: §e${formatMoney(price)}`);
@@ -307,7 +307,7 @@ export function handleShopSignInteract(event) {
       return;
     }
 
-    // 4. Cek Inventory Penuh?
+    // Cek Inventory Penuh?
     const inventory = player.getComponent("inventory");
     const container = inventory.container;
     if (container.emptySlotsCount < 1) {
@@ -315,7 +315,7 @@ export function handleShopSignInteract(event) {
       return;
     }
 
-    // 5. Eksekusi
+    // Eksekusi
     addMoney(player, -price);
 
     try {
