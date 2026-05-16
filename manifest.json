@@ -4,8 +4,16 @@
     "name": "Petek MC Mod",
     "description": "Core Server: Plots, Protection, Warps & Ranks System.",
     "uuid": "968f9a0c-8a21-4b16-b6a7-822b2c7c7865",
-    "version": [1, 5, 0],
-    "min_engine_version": [1, 21, 0]
+    "version": [
+      1,
+      5,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
   },
   "modules": [
     {
@@ -14,13 +22,17 @@
       "language": "javascript",
       "uuid": "88579585-7972-4058-9561-8e279627aca8",
       "entry": "scripts/core/main.js",
-      "version": [1, 5, 0]
+      "version": [
+        1,
+        5,
+        0
+      ]
     }
   ],
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "2.6.0-beta"
+      "version": "2.8.0-beta"
     },
     {
       "module_name": "@minecraft/server-ui",
